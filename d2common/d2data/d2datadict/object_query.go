@@ -1,9 +1,5 @@
 package d2datadict
 
-import (
-	"log"
-)
-
 type ObjectType int
 
 const (
@@ -45,9 +41,6 @@ type ObjectLookupRecord struct {
 
 func LookupObject(act, typ, id int) *ObjectLookupRecord {
 	object := lookupObject(act, typ, id, indexedObjects)
-	if object == nil {
-		log.Panicf("Failed to look up object Act: %d, Type: %d, Id: %d", act, typ, id)
-	}
 	return object
 }
 

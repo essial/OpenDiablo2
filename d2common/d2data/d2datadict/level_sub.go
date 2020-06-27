@@ -62,16 +62,15 @@ type LevelSubstitutionRecord struct {
 	// Beta
 }
 
-var LevelSubstitutions map[int]*LevelSubstitutionRecord
+var LevelSubstitutions map[int]LevelSubstitutionRecord
 
 func LoadLevelSubstitutions(file []byte) {
 	dict := d2common.LoadDataDictionary(string(file))
 	numRecords := len(dict.Data)
-	LevelSubstitutions = make(map[int]*LevelSubstitutionRecord, numRecords)
+	LevelSubstitutions = make(map[int]LevelSubstitutionRecord, numRecords)
 
 	for idx := range dict.Data {
-
-		record := &LevelSubstitutionRecord{
+		record := LevelSubstitutionRecord{
 			Name:         dict.GetString("Name", idx),
 			Id:           dict.GetNumber("Type", idx),
 			File:         dict.GetString("File", idx),
@@ -98,5 +97,6 @@ func LoadLevelSubstitutions(file []byte) {
 
 		LevelSubstitutions[record.Id] = record
 	}
+
 	log.Printf("Loaded %d LevelSubstitution records", len(LevelSubstitutions))
 }

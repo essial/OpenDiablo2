@@ -18,28 +18,78 @@ import (
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2fileformats/d2ds1"
 )
 
-// Represents the map data for a specific location
+// MapEngine represents the map data for a specific location
 type MapEngine struct {
-	seed          int64                       // The map seed
-	entities      []d2mapentity.MapEntity     // Entities on the map
-	tiles         []d2ds1.TileRecord          // The map tiles
-	size          d2common.Size               // The size of the map, in tiles
-	levelType     *d2datadict.LevelTypeRecord // The level type of this map
-	dt1TileData   []d2dt1.Tile                // The DT1 tile data
-	walkMesh      []d2common.PathTile         // The walk mesh
-	startSubTileX int                         // The starting X position
-	startSubTileY int                         // The starting Y position
-	dt1Files      []string                    // The list of DS1 strings
+	act           int                        // The map's act
+	seed          int64                      // The map seed
+	entities      []d2mapentity.MapEntity    // Entities on the map
+	tiles         []d2ds1.TileRecord         // The map tiles
+	size          d2common.Size              // The size of the map, in tiles
+	levelType     d2datadict.LevelTypeRecord // The level type of this map
+	dt1TileData   []d2dt1.Tile               // The DT1 tile data
+	startSubTileX int                        // The starting X position
+	startSubTileY int                        // The starting Y position
+	dt1Files      []string                   // The list of DS1 strings
 }
 
-// Creates a new instance of the map engine
-func CreateMapEngine() *MapEngine {
-	engine := &MapEngine{}
-	return engine
+// InitializeMapEngineForAct creates a new instance of the map engine
+func InitializeMapEngineForAct(act *MapAct) {
+	act.mapEngine.act = act.id // Acts are 0 relative
+	act.mapEngine.seed = act.seed
+
+	mapWidth := 0
+	mapHeight := 0
+
+	for levelIdx := range act.levels {
+		details := &act.levels[levelIdx].details
+		right := details.WorldOffsetX + details.SizeXNormal
+		top := details.WorldOffsetY + details.SizeYNormal
+
+		if mapWidth < right {
+			mapWidth = right
+		}
+
+		if mapHeight < top {
+			mapHeight = top
+		}
+	}
+
+	act.mapEngine.ResetMap(d2enum.RegionNone, mapWidth, mapHeight)
+
+	for levelIdx := range act.levels {
+		level := &act.levels[levelIdx]
+
+		var generator MapGenerator = nil
+
+		switch level.details.LevelGenerationType {
+		case d2enum.LevelTypeNone: // Should only be for first record in the excel doc
+			continue
+		case d2enum.LevelTypeRandomMaze:
+			generator = &MapGeneratorMaze{}
+		case d2enum.LevelTypeWilderness:
+			generator = &MapGeneratorWilderness{}
+		case d2enum.LevelTypePreset:
+			generator = &MapGeneratorPreset{}
+		default:
+			panic("Unknown level type specified. Cannot construct a generator.")
+		}
+
+		generator.init(act.seed, level, &act.mapEngine)
+		generator.generate()
+
+		levelType := d2datadict.LevelTypes[d2enum.RegionIdType(levelIdx)]
+		for idx := range levelType.Files {
+			act.mapEngine.addDT1(levelType.Files[idx])
+		}
+	}
 }
 
-func (m *MapEngine) WalkMesh() *[]d2common.PathTile {
-	return &m.walkMesh
+func (m *MapEngine) Seed() int64 {
+	return m.seed
+}
+
+func (m *MapEngine) Act() int {
+	return m.act
 }
 
 // Returns the starting position on the map in sub-tiles
@@ -53,7 +103,7 @@ func (m *MapEngine) ResetMap(levelType d2enum.RegionIdType, width, height int) {
 	m.size = d2common.Size{Width: width, Height: height}
 	m.tiles = make([]d2ds1.TileRecord, width*height)
 	m.dt1TileData = make([]d2dt1.Tile, 0)
-	m.walkMesh = make([]d2common.PathTile, width*height*25)
+	//m.walkMesh = make([]d2common.PathTile, width*height*25)
 	m.dt1Files = make([]string, 0)
 
 	for idx := range m.levelType.Files {
@@ -114,14 +164,8 @@ func (m *MapEngine) FindTile(style, sequence, tileType int32) d2dt1.Tile {
 }
 
 // Returns the level type of this map
-func (m *MapEngine) LevelType() *d2datadict.LevelTypeRecord {
+func (m *MapEngine) LevelType() d2datadict.LevelTypeRecord {
 	return m.levelType
-}
-
-// Sets the seed of the map for generation
-func (m *MapEngine) SetSeed(seed int64) {
-	log.Printf("Setting map engine seed to %d", seed)
-	m.seed = seed
 }
 
 // Returns the size of the map (in sub-tiles)
@@ -163,6 +207,8 @@ func (m *MapEngine) PlaceStamp(stamp *d2mapstamp.Stamp, tileOffsetX, tileOffsetY
 			targetTileIndex := m.tileCoordinateToIndex((x + xMin), (y + yMin))
 			stampTile := *stamp.Tile(x, y)
 			m.tiles[targetTileIndex] = stampTile
+			m.tiles[targetTileIndex].RegionType = stamp.RegionType()
+
 		}
 	}
 
@@ -192,11 +238,6 @@ func (m *MapEngine) TileAt(tileX, tileY int) *d2ds1.TileRecord {
 // Returns a reference to the map entities
 func (m *MapEngine) Entities() *[]d2mapentity.MapEntity {
 	return &m.entities
-}
-
-// Returns the map engine's seed
-func (m *MapEngine) Seed() int64 {
-	return m.seed
 }
 
 // Adds an entity to the map engine
@@ -269,12 +310,12 @@ func (m *MapEngine) TileExists(tileX, tileY int) bool {
 	return false
 }
 
-func (m *MapEngine) GenerateMap(regionType d2enum.RegionIdType, levelPreset int, fileIndex int, cacheTiles bool) {
-	region := d2mapstamp.LoadStamp(regionType, levelPreset, fileIndex)
-	regionSize := region.Size()
-	m.ResetMap(regionType, regionSize.Width, regionSize.Height)
-	m.PlaceStamp(region, 0, 0)
-}
+//func (m *MapEngine) GenerateMap(regionType d2enum.RegionIdType, levelPreset int, fileIndex int, cacheTiles bool) {
+//	region := d2mapstamp.LoadStamp(regionType, levelPreset, fileIndex)
+//	regionSize := region.Size()
+//	m.ResetMap(regionType, regionSize.Width, regionSize.Height)
+//	m.PlaceStamp(region, 0, 0)
+//}
 
 func (m *MapEngine) GetTileData(style int32, sequence int32, tileType d2enum.TileType) *d2dt1.Tile {
 	for idx := range m.dt1TileData {

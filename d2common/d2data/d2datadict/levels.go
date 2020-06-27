@@ -7,6 +7,8 @@ import (
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
 )
 
+var actIds []int
+
 type LevelDetailsRecord struct {
 
 	// This column has no function, it only serves as a comment field to make it
@@ -361,29 +363,28 @@ type LevelDetailsRecord struct {
 	// Beta
 }
 
-var LevelDetails map[int]*LevelDetailsRecord
+var LevelDetails map[int]LevelDetailsRecord
 
-func GetLevelDetailsByLevelId(id int) *LevelDetailsRecord {
+func LevelDetailsForLevel(id int) LevelDetailsRecord {
 	for i := 0; i < len(LevelDetails); i++ {
 		if LevelDetails[i].Id == id {
 			return LevelDetails[i]
 		}
 	}
 
-	return nil
+	panic("Invalid level id!")
 }
 
-func GetLevelDetailsByActId(act int) []*LevelDetailsRecord {
-	result := make([]*LevelDetailsRecord, 0)
-	for _, record := range LevelDetails {
-		if act == record.Act {
-			result = append(result, record)
+func GetLevelDetailsByActId(act int) []LevelDetailsRecord {
+	result := make([]LevelDetailsRecord, 0)
+	for idx := range LevelDetails {
+		if act == LevelDetails[idx].Act {
+			result = append(result, LevelDetails[idx])
 		}
 	}
+
 	return result
 }
-
-var actIds []int
 
 func GetNumberOfActs() int {
 	return len(actIds)
@@ -393,25 +394,19 @@ func GetActIds() []int {
 	return actIds
 }
 
-func GetLevelWarpsByLevelId(id int) []*LevelWarpRecord {
-	result := make([]*LevelWarpRecord, 0)
+func GetLevelWarpsByLevelId(id int) []LevelWarpRecord {
+	result := make([]LevelWarpRecord, 0)
 	level := LevelDetails[id]
-	for _, warpId := range level.WarpLevelId {
-		if warpId < 0 {
+
+	for _, warpID := range level.WarpLevelId {
+		if warpID < 0 {
 			continue // there are -1 values for empty entries in the table
 		}
-		result = append(result, LevelWarps[warpId])
-	}
-	return result
-}
 
-func GetLevelPresetByLevelId(id int) *LevelPresetRecord {
-	for recordId, record := range LevelPresets {
-		if id == recordId {
-			return record
-		}
+		result = append(result, LevelWarps[warpID])
 	}
-	panic("couldn't find a preset.")
+
+	return result
 }
 
 func GetFirstLevelIdByActId(actId int) int {
@@ -448,12 +443,12 @@ func AppendIfMissing(slice []int, i int) []int {
 func LoadLevelDetails(file []byte) {
 	dict := d2common.LoadDataDictionary(string(file))
 	numRecords := len(dict.Data)
-	LevelDetails = make(map[int]*LevelDetailsRecord, numRecords)
+	LevelDetails = make(map[int]LevelDetailsRecord, numRecords)
 
 	actIds = make([]int, 0)
 
 	for idx := range dict.Data {
-		record := &LevelDetailsRecord{
+		record := LevelDetailsRecord{
 			Name:                  dict.GetString("Name ", idx),
 			Id:                    dict.GetNumber("Id", idx),
 			Palette:               dict.GetNumber("Pal", idx),

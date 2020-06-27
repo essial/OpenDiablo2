@@ -6,15 +6,13 @@ import (
 
 type GenerateMapPacket struct {
 	ActId   int `json:"actId"`
-	LevelId int `json:"levelId"`
 }
 
-func CreateGenerateMapPacket(actId, levelId int) NetPacket {
+func CreateGenerateMapPacket(actId int) NetPacket {
 	return NetPacket{
 		PacketType: d2netpackettype.GenerateMap,
 		PacketData: GenerateMapPacket{
 			ActId:   actId,
-			LevelId: levelId,
 		},
 	}
 

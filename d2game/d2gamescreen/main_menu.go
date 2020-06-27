@@ -51,7 +51,6 @@ type MainMenu struct {
 	exitDiabloButton    d2ui.Button
 	creditsButton       d2ui.Button
 	cinematicsButton    d2ui.Button
-	mapTestButton       d2ui.Button
 	networkTcpIpButton  d2ui.Button
 	networkCancelButton d2ui.Button
 	btnTcpIpCancel      d2ui.Button
@@ -179,11 +178,6 @@ func (v *MainMenu) OnLoad(loading d2screen.LoadingState) {
 	v.githubButton.OnActivated(func() { v.onGithubButtonClicked() })
 	d2ui.AddWidget(&v.githubButton)
 
-	v.mapTestButton = d2ui.CreateButton(d2ui.ButtonTypeWide, "MAP ENGINE TEST")
-	v.mapTestButton.SetPosition(264, 440)
-	v.mapTestButton.OnActivated(func() { v.onMapTestClicked() })
-	d2ui.AddWidget(&v.mapTestButton)
-
 	v.networkTcpIpButton = d2ui.CreateButton(d2ui.ButtonTypeWide, "TCP/IP GAME")
 	v.networkTcpIpButton.SetPosition(264, 280)
 	v.networkTcpIpButton.OnActivated(func() { v.onNetworkTcpIpClicked() })
@@ -249,10 +243,6 @@ func (v *MainMenu) OnLoad(loading d2screen.LoadingState) {
 	}
 
 	d2input.BindHandler(v)
-}
-
-func (v *MainMenu) onMapTestClicked() {
-	d2screen.SetNextScreen(CreateMapEngineTest(0, 1))
 }
 
 func openbrowser(url string) {
@@ -375,7 +365,6 @@ func (v *MainMenu) SetScreenMode(screenMode MainMenuScreenMode) {
 	v.cinematicsButton.SetVisible(isMainMenu)
 	v.singlePlayerButton.SetVisible(isMainMenu)
 	v.githubButton.SetVisible(isMainMenu)
-	v.mapTestButton.SetVisible(isMainMenu)
 	v.multiplayerButton.SetVisible(isMainMenu)
 	v.networkTcpIpButton.SetVisible(isMultiplayer)
 	v.networkCancelButton.SetVisible(isMultiplayer)

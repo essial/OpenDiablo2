@@ -434,8 +434,10 @@ func (v SelectHeroClass) onExitButtonClicked() {
 }
 
 func (v SelectHeroClass) onOkButtonClicked() {
-	gameState := d2player.CreatePlayerState(v.heroNameTextbox.GetText(), v.selectedHero, *d2datadict.CharStats[v.selectedHero], v.hardcoreCheckbox.GetCheckState())
-	gameClient, _ := d2client.Create(d2clientconnectiontype.Local)
+	gameState := d2player.CreatePlayerState(v.heroNameTextbox.GetText(), v.selectedHero,
+		*d2datadict.CharStats[v.selectedHero], v.hardcoreCheckbox.GetCheckState())
+	gameClient := d2client.Create(d2clientconnectiontype.Local)
+
 	gameClient.Open(v.connectionHost, gameState.FilePath)
 	d2screen.SetNextScreen(CreateGame(gameClient))
 }
@@ -443,22 +445,26 @@ func (v SelectHeroClass) onOkButtonClicked() {
 func (v *SelectHeroClass) Render(screen d2render.Surface) error {
 	v.bgImage.RenderSegmented(screen, 4, 3, 0)
 	v.headingLabel.Render(screen)
+
 	if v.selectedHero != d2enum.HeroNone {
 		v.heroClassLabel.Render(screen)
 		v.heroDesc1Label.Render(screen)
 		v.heroDesc2Label.Render(screen)
 		v.heroDesc3Label.Render(screen)
 	}
+
 	for heroClass, heroInfo := range v.heroRenderInfo {
 		if heroInfo.Stance == d2enum.HeroStanceIdle || heroInfo.Stance == d2enum.HeroStanceIdleSelected {
 			v.renderHero(screen, heroClass)
 		}
 	}
+
 	for heroClass, heroInfo := range v.heroRenderInfo {
 		if heroInfo.Stance != d2enum.HeroStanceIdle && heroInfo.Stance != d2enum.HeroStanceIdleSelected {
 			v.renderHero(screen, heroClass)
 		}
 	}
+
 	v.campfire.Render(screen)
 	if v.heroNameTextbox.GetVisible() {
 		v.heroNameLabel.Render(screen)
@@ -472,6 +478,7 @@ func (v *SelectHeroClass) Render(screen d2render.Surface) error {
 func (v *SelectHeroClass) Advance(tickTime float64) error {
 	canSelect := true
 	v.campfire.Advance(tickTime)
+
 	for _, info := range v.heroRenderInfo {
 		info.Advance(tickTime)
 		if info.Stance != d2enum.HeroStanceIdle && info.Stance != d2enum.HeroStanceIdleSelected && info.Stance != d2enum.HeroStanceSelected {

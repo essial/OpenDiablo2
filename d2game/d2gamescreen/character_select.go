@@ -9,7 +9,6 @@ import (
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2input"
 
 	"github.com/OpenDiablo2/OpenDiablo2/d2common"
-	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2data/d2datadict"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2resource"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2asset"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2audio"
@@ -166,8 +165,6 @@ func (v *CharacterSelect) updateCharacterBoxes() {
 
 		playerId := ""
 		playerName := ""
-		actId := d2datadict.GetActIds()[0]
-		levelId := d2datadict.GetFirstLevelIdByActId(actId)
 		x, y := 0, 0
 		dir := 0
 		heroType := v.gameStates[idx].HeroType
@@ -177,8 +174,6 @@ func (v *CharacterSelect) updateCharacterBoxes() {
 		v.characterImage[i] = d2mapentity.CreatePlayer(
 			playerId,
 			playerName,
-			actId,
-			levelId,
 			x, y,
 			dir,
 			heroType,
@@ -316,7 +311,7 @@ func (v *CharacterSelect) refreshGameStates() {
 }
 
 func (v *CharacterSelect) onOkButtonClicked() {
-	gameClient, _ := d2client.Create(v.connectionType)
+	gameClient := d2client.Create(v.connectionType)
 	switch v.connectionType {
 	case d2clientconnectiontype.LANClient:
 		gameClient.Open(v.connectionHost, v.gameStates[v.selectedCharacter].FilePath)

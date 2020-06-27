@@ -16,13 +16,13 @@ type LevelTypeRecord struct {
 	Expansion bool     // Expansion
 }
 
-var LevelTypes map[d2enum.RegionIdType]*LevelTypeRecord
+var LevelTypes map[d2enum.RegionIdType]LevelTypeRecord
 
 func LoadLevelTypes(file []byte) {
-	LevelTypes = make(map[d2enum.RegionIdType]*LevelTypeRecord)
+	LevelTypes = make(map[d2enum.RegionIdType]LevelTypeRecord)
 	dict := d2common.LoadDataDictionary(string(file))
 	for idx := range dict.Data {
-		record := &LevelTypeRecord{
+		record := LevelTypeRecord{
 			Name: dict.GetString("Name", idx),
 			Id:   dict.GetNumber("Id", idx),
 			Files: []string{
@@ -63,7 +63,9 @@ func LoadLevelTypes(file []byte) {
 			Act:       dict.GetNumber("Act", idx),
 			Expansion: dict.GetNumber("Expansion", idx) > 0,
 		}
+
 		LevelTypes[d2enum.RegionIdType(record.Id)] = record
 	}
+
 	log.Printf("Loaded %d LevelType records", len(LevelTypes))
 }

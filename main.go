@@ -64,8 +64,6 @@ var singleton struct {
 }
 
 func main() {
-	region := kingpin.Arg("region", "Region type id").Int()
-	preset := kingpin.Arg("preset", "Level preset").Int()
 	profileOption := kingpin.Flag("profile", "Profiles the program, one of (cpu, mem, block, goroutine, trace, thread, mutex)").String()
 
 	kingpin.Parse()
@@ -87,11 +85,7 @@ func main() {
 		}
 	}
 
-	if *region == 0 {
-		d2screen.SetNextScreen(d2gamescreen.CreateMainMenu())
-	} else {
-		d2screen.SetNextScreen(d2gamescreen.CreateMapEngineTest(*region, *preset))
-	}
+	d2screen.SetNextScreen(d2gamescreen.CreateMainMenu())
 
 	run(update)
 }

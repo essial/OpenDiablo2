@@ -6,7 +6,7 @@ import (
 	"github.com/OpenDiablo2/OpenDiablo2/d2common"
 )
 
-var DifficultyLevels map[string]*DifficultyLevelRecord
+var DifficultyLevels map[string]DifficultyLevelRecord
 
 type DifficultyLevelRecord struct {
 	// Difficulty name. it is hardcoded and you cannot add new ones unless you do
@@ -93,10 +93,10 @@ func LoadDifficultyLevels(file []byte) {
 	dict := d2common.LoadDataDictionary(string(file))
 	numRows := len(dict.Data)
 
-	DifficultyLevels = make(map[string]*DifficultyLevelRecord, numRows)
+	DifficultyLevels = make(map[string]DifficultyLevelRecord, numRows)
 
 	for idx := range dict.Data {
-		record := &DifficultyLevelRecord{
+		record := DifficultyLevelRecord{
 			Name:                   dict.GetString("Name", idx),
 			ResistancePenalty:      dict.GetNumber("ResistPenalty", idx),
 			DeathExperiencePenalty: dict.GetNumber("DeathExpPenalty", idx),

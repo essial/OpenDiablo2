@@ -21,28 +21,29 @@ type LevelWarpRecord struct {
 	Direction  string
 }
 
-var LevelWarps map[int]*LevelWarpRecord
+var LevelWarps map[int]LevelWarpRecord
 
 func LoadLevelWarps(levelWarpData []byte) {
-	LevelWarps = make(map[int]*LevelWarpRecord)
+	LevelWarps = make(map[int]LevelWarpRecord)
 	streamReader := d2common.CreateStreamReader(levelWarpData)
 	numRecords := int(streamReader.GetInt32())
 	for i := 0; i < numRecords; i++ {
 		id := int(streamReader.GetInt32())
-		LevelWarps[id] = &LevelWarpRecord{}
-		LevelWarps[id].Id = int32(id)
-		LevelWarps[id].SelectX = streamReader.GetInt32()
-		LevelWarps[id].SelectY = streamReader.GetInt32()
-		LevelWarps[id].SelectDX = streamReader.GetInt32()
-		LevelWarps[id].SelectDY = streamReader.GetInt32()
-		LevelWarps[id].ExitWalkX = streamReader.GetInt32()
-		LevelWarps[id].ExitWalkY = streamReader.GetInt32()
-		LevelWarps[id].OffsetX = streamReader.GetInt32()
-		LevelWarps[id].OffsetY = streamReader.GetInt32()
-		LevelWarps[id].LitVersion = streamReader.GetInt32() == 1
-		LevelWarps[id].Tiles = streamReader.GetInt32()
-		LevelWarps[id].Direction = string(streamReader.GetByte())
+		record := LevelWarpRecord{}
+		record.Id = int32(id)
+		record.SelectX = streamReader.GetInt32()
+		record.SelectY = streamReader.GetInt32()
+		record.SelectDX = streamReader.GetInt32()
+		record.SelectDY = streamReader.GetInt32()
+		record.ExitWalkX = streamReader.GetInt32()
+		record.ExitWalkY = streamReader.GetInt32()
+		record.OffsetX = streamReader.GetInt32()
+		record.OffsetY = streamReader.GetInt32()
+		record.LitVersion = streamReader.GetInt32() == 1
+		record.Tiles = streamReader.GetInt32()
+		record.Direction = string(streamReader.GetByte())
 		streamReader.SkipBytes(3)
+		LevelWarps[id] = record
 	}
 	log.Printf("Loaded %d level warps", len(LevelWarps))
 }

@@ -4,57 +4,38 @@ import (
 	"log"
 
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2data/d2datadict"
-	// "github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
 )
 
+// MapAct is a structure that represents an act's map
 type MapAct struct {
-	realm  *MapRealm
-	id     int
-	levels map[int]*MapLevel
+	id        int
+	seed      int64
+	mapEngine MapEngine
+	levels    []MapLevel
 }
 
-func (act *MapAct) isActive() bool {
-	for _, level := range act.levels {
-		if level.isActive() {
-			return true
-		}
-	}
-	return false
+
+func (act *MapAct) MapEngine() *MapEngine{
+	return &act.mapEngine
 }
 
-func (act *MapAct) Advance(elapsed float64) {
-	if !act.isActive() {
-		return
-	}
-	for _, level := range act.levels {
-		level.Advance(elapsed)
-	}
-}
+// CreateAct create an act based on the act id
+func CreateAct(seed int64, actId int) MapAct {
+	actLevelRecords := d2datadict.GetLevelDetailsByActId(actId)
 
-func (act *MapAct) Init(realm *MapRealm, actIndex int) {
-	act.realm = realm
-	act.levels = make(map[int]*MapLevel)
-	act.id = actIndex
-
-	actLevelRecords := d2datadict.GetLevelDetailsByActId(actIndex)
-
-	log.Printf("Initializing Act %d", actIndex)
-	for _, record := range actLevelRecords {
-		level := &MapLevel{}
-		levelId := record.Id
-		level.Init(act, levelId)
-		act.levels[levelId] = level
+	act := MapAct{
+		id:     actId,
+		seed:   seed,
+		levels: make([]MapLevel, len(actLevelRecords)),
 	}
 
-	act.GenerateTown() // ensures that starting point is known for first player
-}
+	log.Printf("Initializing Act %d", actId)
 
-func (act *MapAct) GenerateTown() {
-	townId := d2datadict.GetFirstLevelIdByActId(act.id)
-	act.levels[townId].GenerateMap()
-}
+	for idx := range actLevelRecords {
+		act.levels[idx] = CreateMapLevel(actLevelRecords[idx])
+	}
 
-func (act *MapAct) GenerateMap(levelId int) {
-	log.Printf("Generating map in Act %d", act.id)
-	act.levels[levelId].GenerateMap()
+	InitializeMapEngineForAct(&act)
+
+	return act
 }

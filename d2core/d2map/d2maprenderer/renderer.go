@@ -35,6 +35,7 @@ func CreateMapRenderer(mapEngine *d2mapengine.MapEngine) *MapRenderer {
 		mapEngine: mapEngine,
 		viewport:  NewViewport(0, 0, 800, 600),
 	}
+	result.palette, _ = loadPaletteForAct(mapEngine.Act())
 
 	result.viewport.SetCamera(&result.camera)
 
@@ -42,10 +43,7 @@ func CreateMapRenderer(mapEngine *d2mapengine.MapEngine) *MapRenderer {
 		result.debugVisLevel = level
 	})
 
-	if mapEngine.LevelType().Id != 0 {
-		result.generateTileCache()
-	}
-
+	result.generateTileCache()
 	return result
 }
 
@@ -251,7 +249,7 @@ func (mr *MapRenderer) WorldToScreenF(x, y float64) (float64, float64) {
 func (mr *MapRenderer) renderTileDebug(ax, ay int, debugVisLevel int, target d2render.Surface) {
 	subTileColor := color.RGBA{R: 80, G: 80, B: 255, A: 50}
 	tileColor := color.RGBA{R: 255, G: 255, B: 255, A: 100}
-	tileCollisionColor := color.RGBA{R: 128, G: 0, B: 0, A: 100}
+	//tileCollisionColor := color.RGBA{R: 128, G: 0, B: 0, A: 100}
 
 	screenX1, screenY1 := mr.viewport.WorldToScreen(float64(ax), float64(ay))
 	screenX2, screenY2 := mr.viewport.WorldToScreen(float64(ax+1), float64(ay))
@@ -296,18 +294,18 @@ func (mr *MapRenderer) renderTileDebug(ax, ay int, debugVisLevel int, target d2r
 			}
 		}
 
-		for yy := 0; yy < 5; yy++ {
-			for xx := 0; xx < 5; xx++ {
-				isoX := (xx - yy) * 16
-				isoY := (xx + yy) * 8
-				var walkableArea = (*mr.mapEngine.WalkMesh())[((yy+(ay*5))*mr.mapEngine.Size().Width*5)+xx+(ax*5)]
-				if !walkableArea.Walkable {
-					target.PushTranslation(isoX-3, isoY+4)
-					target.DrawRect(5, 5, tileCollisionColor)
-					target.Pop()
-				}
-			}
-		}
+		//for yy := 0; yy < 5; yy++ {
+		//	for xx := 0; xx < 5; xx++ {
+		//		isoX := (xx - yy) * 16
+		//		isoY := (xx + yy) * 8
+		//		var walkableArea = (*mr.mapEngine.WalkMesh())[((yy+(ay*5))*mr.mapEngine.Size().Width*5)+xx+(ax*5)]
+		//		if !walkableArea.Walkable {
+		//			target.PushTranslation(isoX-3, isoY+4)
+		//			target.DrawRect(5, 5, tileCollisionColor)
+		//			target.Pop()
+		//		}
+		//	}
+		//}
 	}
 }
 
@@ -324,23 +322,18 @@ func (mr *MapRenderer) Advance(elapsed float64) {
 	}
 }
 
-func loadPaletteForAct(levelType d2enum.RegionIdType) (*d2dat.DATPalette, error) {
+func loadPaletteForAct(act int) (*d2dat.DATPalette, error) {
 	var palettePath string
-	switch levelType {
-	case d2enum.RegionAct1Town, d2enum.RegionAct1Wilderness, d2enum.RegionAct1Cave, d2enum.RegionAct1Crypt,
-		d2enum.RegionAct1Monestary, d2enum.RegionAct1Courtyard, d2enum.RegionAct1Barracks,
-		d2enum.RegionAct1Jail, d2enum.RegionAct1Cathedral, d2enum.RegionAct1Catacombs, d2enum.RegionAct1Tristram:
+	switch act {
+	case 0:
 		palettePath = d2resource.PaletteAct1
-	case d2enum.RegionAct2Town, d2enum.RegionAct2Sewer, d2enum.RegionAct2Harem, d2enum.RegionAct2Basement,
-		d2enum.RegionAct2Desert, d2enum.RegionAct2Tomb, d2enum.RegionAct2Lair, d2enum.RegionAct2Arcane:
+	case 1:
 		palettePath = d2resource.PaletteAct2
-	case d2enum.RegionAct3Town, d2enum.RegionAct3Jungle, d2enum.RegionAct3Kurast, d2enum.RegionAct3Spider,
-		d2enum.RegionAct3Dungeon, d2enum.RegionAct3Sewer:
+	case 2:
 		palettePath = d2resource.PaletteAct3
-	case d2enum.RegionAct4Town, d2enum.RegionAct4Mesa, d2enum.RegionAct4Lava, d2enum.RegionAct5Lava:
+	case 3:
 		palettePath = d2resource.PaletteAct4
-	case d2enum.RegonAct5Town, d2enum.RegionAct5Siege, d2enum.RegionAct5Barricade, d2enum.RegionAct5Temple,
-		d2enum.RegionAct5IceCaves, d2enum.RegionAct5Baal:
+	case 4:
 		palettePath = d2resource.PaletteAct5
 	default:
 		return nil, errors.New("failed to find palette for region")

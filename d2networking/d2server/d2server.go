@@ -16,8 +16,6 @@ import (
 
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2map/d2mapengine"
 
-	// "github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
-	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2data/d2datadict"
 	packet "github.com/OpenDiablo2/OpenDiablo2/d2networking/d2netpacket"
 	packettype "github.com/OpenDiablo2/OpenDiablo2/d2networking/d2netpacket/d2netpackettype"
 	"github.com/OpenDiablo2/OpenDiablo2/d2script"
@@ -35,6 +33,7 @@ func advance() {
 
 func Create(openNetworkServer bool) {
 	log.Print("Creating GameServer")
+
 	if singletonServer != nil {
 		return
 	}
@@ -55,13 +54,6 @@ func Create(openNetworkServer bool) {
 	singletonServer.realm.Init(seed)
 	singletonServer.manager = CreateConnectionManager(singletonServer)
 
-	// mapEngine := d2mapengine.CreateMapEngine()
-	// mapEngine.SetSeed(singletonServer.seed)
-	// TODO: Mapgen - Needs levels.txt stuff
-	// mapEngine.ResetMap(d2enum.RegionAct1Town, 100, 100)
-	// d2mapgen.GenerateAct1Overworld(mapEngine)
-	// singletonServer.mapEngines = append(singletonServer.mapEngines, mapEngine)
-
 	addScriptEngineFunctions()
 
 	if openNetworkServer {
@@ -78,6 +70,7 @@ func ottoTestFunc(call otto.FunctionCall) otto.Value {
 	if err != nil {
 		fmt.Print(err.Error())
 	}
+
 	return val
 }
 
@@ -91,12 +84,14 @@ func createNetworkServer() {
 	if err != nil {
 		panic(err)
 	}
+
 	singletonServer.udpConnection.SetReadBuffer(4096)
 }
 
 func runNetworkServer() {
 	buffer := make([]byte, 4096)
 	srv := singletonServer
+
 	for srv.running {
 		advance()
 
@@ -105,10 +100,11 @@ func runNetworkServer() {
 			fmt.Printf("Socket error: %s\n", err)
 			continue
 		}
+
 		buff := bytes.NewBuffer(buffer)
-		packetTypeId, err := buff.ReadByte()
+		packetTypeId, _ := buff.ReadByte()
 		packetType := packettype.NetPacketType(packetTypeId)
-		reader, err := gzip.NewReader(buff)
+		reader, _ := gzip.NewReader(buff)
 		sb := new(strings.Builder)
 		io.Copy(sb, reader)
 		stringData := sb.String()
@@ -130,17 +126,22 @@ func runNetworkServer() {
 
 func Run() {
 	log.Print("Starting GameServer")
+
 	singletonServer.running = true
 	singletonServer.scriptEngine.RunScript("scripts/server/server.js")
+
 	if singletonServer.udpConnection != nil {
 		go runNetworkServer()
 	}
+
 	log.Print("Network server has been started")
 }
 
 func Stop() {
 	log.Print("Stopping GameServer")
+
 	singletonServer.running = false
+
 	if singletonServer.udpConnection != nil {
 		singletonServer.udpConnection.Close()
 	}
@@ -150,53 +151,43 @@ func Destroy() {
 	if singletonServer == nil {
 		return
 	}
+
 	log.Print("Destroying GameServer")
 	Stop()
 }
 
 func OnClientConnected(client ClientConnection) {
 	srv := singletonServer
-	realm := srv.realm
 	seed := srv.seed
 	state := client.GetPlayerState()
 
-	actId := state.Act
-	levelId := d2datadict.GetFirstLevelIdByActId(actId)
-	engine := realm.GetMapEngine(actId, levelId)
-
 	// params for AddPlayer packet, of new player
-	id := client.GetUniqueId()
-
+	playerId := client.GetUniqueId()
 	name := state.HeroName
 	hero := state.HeroType
 	stats := *state.Stats
 	equip := state.Equipment
-	x, y := engine.GetStartPosition()
+	x, y := srv.realm.Act(state.Act).MapEngine().GetStartPosition()
 	state.X = x
 	state.Y = y
 
-	infoPacket := packet.CreateUpdateServerInfoPacket(seed, id)
-	mapgenPacket := packet.CreateGenerateMapPacket(actId, levelId)
+	updateServerInfoPacket := packet.CreateUpdateServerInfoPacket(seed, playerId, *state)
+	mapgenPacket := packet.CreateGenerateMapPacket(state.Act)
+	addNew := packet.CreateAddPlayerPacket(playerId, name, state.Act, int(x*5), int(y*5), hero, stats, equip)
+	srv.clientConnections[playerId] = client
 
-	// UNSURE: maybe we should pass a struct instead of all of these args
-	addNew := packet.CreateAddPlayerPacket(
-		id, name, actId, int(x*5), int(y*5), hero, stats, equip,
-	)
+	log.Printf("Client connected with an id of %s", playerId)
 
-	srv.clientConnections[id] = client
-
-	client.SendPacketToClient(infoPacket)
+	client.SendPacketToClient(updateServerInfoPacket)
 	client.SendPacketToClient(mapgenPacket)
 
-	log.Printf("Client connected with an id of %s", id)
-	realm.AddPlayer(id, state.Act)
 
 	// for each connection, send the AddPlayer packet for the new player
 	for _, connection := range srv.clientConnections {
 		conId := connection.GetUniqueId()
 		connection.SendPacketToClient(addNew)
 
-		if conId == id {
+		if conId == playerId {
 			continue
 		}
 
@@ -222,7 +213,6 @@ func OnClientDisconnected(client ClientConnection) {
 	log.Printf("Client disconnected with an id of %s", client.GetUniqueId())
 	clientId := client.GetUniqueId()
 	delete(singletonServer.clientConnections, clientId)
-	singletonServer.realm.RemovePlayer(clientId)
 }
 
 func OnPacketReceived(client ClientConnection, p packet.NetPacket) error {
@@ -235,9 +225,11 @@ func OnPacketReceived(client ClientConnection, p packet.NetPacket) error {
 		playerState.X = p.PacketData.(packet.MovePlayerPacket).DestX
 		playerState.Y = p.PacketData.(packet.MovePlayerPacket).DestY
 		// ----------------------------------------------------------------
+
 		for _, player := range singletonServer.clientConnections {
 			player.SendPacketToClient(p)
 		}
 	}
+
 	return nil
 }

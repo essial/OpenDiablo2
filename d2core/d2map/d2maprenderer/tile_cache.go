@@ -3,8 +3,6 @@ package d2maprenderer
 import (
 	"log"
 
-	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
-
 	"github.com/OpenDiablo2/OpenDiablo2/d2common"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2fileformats/d2ds1"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2fileformats/d2dt1"
@@ -12,7 +10,7 @@ import (
 )
 
 func (mr *MapRenderer) generateTileCache() {
-	mr.palette, _ = loadPaletteForAct(d2enum.RegionIdType(mr.mapEngine.LevelType().Id))
+	mr.palette, _ = loadPaletteForAct(mr.mapEngine.Act())
 	mapEngineSize := mr.mapEngine.Size()
 
 	for idx, tile := range *mr.mapEngine.Tiles() {

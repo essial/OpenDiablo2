@@ -18,6 +18,8 @@ import (
 	"github.com/OpenDiablo2/OpenDiablo2/d2networking/d2netpacket"
 )
 
+const zoneTextDuration = 2.0 // seconds
+
 type Game struct {
 	gameClient           *d2client.GameClient
 	MapRenderer          *d2maprenderer.MapRenderer
@@ -35,9 +37,11 @@ func CreateGame(gameClient *d2client.GameClient) *Game {
 		localPlayer:          nil,
 		lastRegionType:       d2enum.RegionNone,
 		ticksSinceLevelCheck: 0,
-		MapRenderer:          d2maprenderer.CreateMapRenderer(gameClient.MapEngine),
+		MapRenderer:          nil,
 		escapeMenu:           NewEscapeMenu(),
 	}
+	result.gameClient.SetListener(result)
+	result.MapRenderer = d2maprenderer.CreateMapRenderer(result.gameClient.MapAct.MapEngine())
 	result.escapeMenu.OnLoad()
 	d2input.BindHandler(result.escapeMenu)
 	return result
@@ -54,11 +58,6 @@ func (v *Game) OnUnload() error {
 }
 
 func (v *Game) Render(screen d2render.Surface) error {
-	if v.gameClient.RegenMap {
-		v.gameClient.RegenMap = false
-		v.MapRenderer.RegenerateTileCache()
-	}
-
 	if v.MapRenderer != nil {
 		screen.Clear(color.Black)
 		v.MapRenderer.Render(screen)
@@ -71,11 +70,10 @@ func (v *Game) Render(screen d2render.Surface) error {
 	return nil
 }
 
-var zoneTextDuration = 2.0 // seconds
 
 func (v *Game) Advance(tickTime float64) error {
-	if (v.escapeMenu != nil && !v.escapeMenu.IsOpen()) || len(v.gameClient.Players) != 1 {
-		v.gameClient.MapEngine.Advance(tickTime) // TODO: Hack
+	if v.MapRenderer != nil && (v.escapeMenu != nil && !v.escapeMenu.IsOpen()) || len(v.gameClient.Players) != 1 {
+		v.gameClient.MapAct.MapEngine().Advance(tickTime) // TODO: Hack
 	}
 
 	if v.gameControls != nil {
@@ -86,7 +84,7 @@ func (v *Game) Advance(tickTime float64) error {
 	if v.ticksSinceLevelCheck > 1.0 {
 		v.ticksSinceLevelCheck = 0
 		if v.localPlayer != nil {
-			tile := v.gameClient.MapEngine.TileAt(v.localPlayer.TileX, v.localPlayer.TileY)
+			tile := v.gameClient.MapAct.MapEngine().TileAt(v.localPlayer.TileX, v.localPlayer.TileY)
 			if tile != nil {
 				switch tile.RegionType {
 				case d2enum.RegionAct1Town: // Rogue encampent
@@ -124,9 +122,9 @@ func (v *Game) Advance(tickTime float64) error {
 				continue
 			}
 			v.localPlayer = player
-			engine := v.gameClient.MapEngine
 			renderer := v.MapRenderer
-			v.gameControls = d2player.NewGameControls(player, engine, renderer, v)
+			v.gameControls = d2player.NewGameControls(player,
+				v.gameClient.MapAct.MapEngine(), renderer, v)
 			v.gameControls.Load()
 			d2input.BindHandler(v.gameControls)
 
@@ -148,4 +146,16 @@ func (v *Game) OnPlayerMove(x2, y2 float64) {
 	x1, y1 := v.localPlayer.LocationX/5.0, v.localPlayer.LocationY/5.0
 	movePacket := d2netpacket.CreateMovePlayerPacket(id, x1, y1, x2, y2)
 	v.gameClient.SendPacketToServer(movePacket)
+}
+
+func (v *Game) OnMapEngineChanged() {
+	if v.MapRenderer == nil {
+		v.MapRenderer = d2maprenderer.CreateMapRenderer(v.gameClient.MapAct.MapEngine())
+	} else {
+		v.MapRenderer.SetMapEngine(v.gameClient.MapAct.MapEngine())
+	}
+}
+
+func (v *Game) OnLocalPlayerId(playerId string) {
+
 }

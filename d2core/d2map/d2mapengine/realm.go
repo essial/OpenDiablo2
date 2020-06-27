@@ -10,7 +10,9 @@ import (
 	A MapRealm represents the state of the maps/levels/quests for a server
 
 	A MapRealm has MapActs
-	A MapAct has MapLevels
+	A MapAct has:
+		MapLevels
+		MapEngine
 	A MapLevel has:
 		a MapEngine
 		a MapGenerator for the level
@@ -31,82 +33,50 @@ import (
 */
 type MapRealm struct {
 	seed       int64
-	difficulty *d2datadict.DifficultyLevelRecord
-	acts       map[int]*MapAct
-	players    map[string]string
+	difficulty d2datadict.DifficultyLevelRecord
+	acts       []MapAct
 	host       string
 }
 
-// Checks if the realm is in an active state
-func (realm *MapRealm) isActive() bool {
-	return realm.hasActiveActs()
-}
-
-// Checks if there is an active act
-func (realm *MapRealm) hasActiveActs() bool {
-	for _, act := range realm.acts {
-		if act.isActive() {
-			return true
-		}
-	}
-	return false
-}
-
-// Advances the realm, which advances the acts, which advances the levels...
+// Advance advances the realm, which advances the acts, which advances the levels...
 func (realm *MapRealm) Advance(elapsed float64) {
-	if !realm.isActive() {
-		return
-	}
 	for _, act := range realm.acts {
-		act.Advance(elapsed)
+		act.MapEngine().Advance(elapsed)
 	}
 }
 
-// Sets the host of the realm, which determines quest availability for players
-func (realm *MapRealm) SetHost(id string) {
-	if player, found := realm.players[id]; found {
-		realm.host = player
-		log.Printf("Host is now %s", id)
-	}
-}
-
-// Adds a player to the realm
-func (realm *MapRealm) AddPlayer(id string, actId int) {
-	realm.players[id] = id
-	if realm.host == "" {
-		realm.SetHost(id)
-	}
-}
-
-// Removes a player from the realm
-func (realm *MapRealm) RemovePlayer(id string) {
-	delete(realm.players, id)
-}
-
-// Initialize the realm
+// Init initializes the realm
 func (realm *MapRealm) Init(seed int64) {
-	// realm.playerStates = make(map[string]*d2mapentitiy.Player)
-
 	log.Printf("Initializing Realm...")
+
+	////////////////////////////////////////////////////////////////////// FIXME
+	// We need to set the difficulty level of the realm in order to pull
+	// the right data from level details. testing this for now with normal diff
+	// NOTE: we would be setting difficulty level in the realm when a host
+	// is connected (the first player)
+	diffTestKey := "Normal"
+	realm.difficulty = d2datadict.DifficultyLevels[diffTestKey] // hack
+	////////////////////////////////////////////////////////////////////////////
+
 	realm.seed = seed
 	actIds := d2datadict.GetActIds()
-	realm.acts = make(map[int]*MapAct)
-	realm.players = make(map[string]string)
+	realm.acts = make([]MapAct, len(actIds))
 
-	for _, actId := range actIds {
-		act := &MapAct{}
-		realm.acts[actId] = act
-
-		act.Init(realm, actId)
+	for _, actID := range actIds {
+		realm.acts[actID] = CreateAct(seed, actID)
 	}
 }
 
-func (realm *MapRealm) GenerateMap(actId, levelId int) {
-	realm.acts[actId].GenerateMap(levelId)
-}
+func (realm *MapRealm) Act(id int) *MapAct {
+	for idx := range realm.acts {
+		if realm.acts[idx].id != id {
+			continue
+		}
 
-func (realm *MapRealm) GetMapEngine(actId, levelId int) *MapEngine {
-	return realm.acts[actId].levels[levelId].mapEngine
+		return &realm.acts[idx]
+	}
+
+	return nil
 }
 
 func (realm *MapRealm) GetFirstActLevelId(actId int) int {

@@ -1,6 +1,7 @@
 package d2mapstamp
 
 import (
+	"log"
 	"math"
 	"math/rand"
 
@@ -19,16 +20,18 @@ import (
 // Represents a pre-fabricated map stamp that can be placed on a map
 type Stamp struct {
 	regionPath  string                        // The file path of the region
-	levelType   *d2datadict.LevelTypeRecord   // The level type id for this stamp
-	levelPreset *d2datadict.LevelPresetRecord // The level preset id for this stamp
+	regionTypeId d2enum.RegionIdType
+	levelType   d2datadict.LevelTypeRecord   // The level type id for this stamp
+	levelPreset d2datadict.LevelPresetRecord // The level preset id for this stamp
 	tiles       []d2dt1.Tile                  // The tiles contained on this stamp
 	ds1         *d2ds1.DS1                    // The backing DS1 file for this stamp
 }
 
 // Loads a stamp based on the supplied parameters
-func LoadStamp(levelType d2enum.RegionIdType, levelPreset int, fileIndex int) *Stamp {
+func LoadStamp(regionTypeId d2enum.RegionIdType, levelPreset int, fileIndex int) *Stamp {
 	stamp := &Stamp{
-		levelType:   d2datadict.LevelTypes[levelType],
+		regionTypeId: regionTypeId,
+		levelType:   d2datadict.LevelTypes[regionTypeId],
 		levelPreset: d2datadict.LevelPresets[levelPreset],
 	}
 	for _, levelTypeDt1 := range stamp.levelType.Files {
@@ -70,7 +73,7 @@ func LoadStamp(levelType d2enum.RegionIdType, levelPreset int, fileIndex int) *S
 	// Update the region info for the tiles
 	for rx := 0; rx < len(stamp.ds1.Tiles); rx++ {
 		for x := 0; x < len(stamp.ds1.Tiles[rx]); x++ {
-			stamp.ds1.Tiles[rx][x].RegionType = levelType
+			stamp.ds1.Tiles[rx][x].RegionType = regionTypeId
 		}
 	}
 
@@ -82,13 +85,17 @@ func (mr *Stamp) Size() d2common.Size {
 	return d2common.Size{int(mr.ds1.Width), int(mr.ds1.Height)}
 }
 
+func (mr *Stamp) RegionType() d2enum.RegionIdType {
+	return mr.regionTypeId
+}
+
 // Gets the level preset id
-func (mr *Stamp) LevelPreset() *d2datadict.LevelPresetRecord {
+func (mr *Stamp) LevelPreset() d2datadict.LevelPresetRecord {
 	return mr.levelPreset
 }
 
 // Returns the level type id
-func (mr *Stamp) LevelType() *d2datadict.LevelTypeRecord {
+func (mr *Stamp) LevelType() d2datadict.LevelTypeRecord {
 	return mr.levelType
 }
 
@@ -116,7 +123,10 @@ func (mr *Stamp) Entities(tileOffsetX, tileOffsetY int) []d2mapentity.MapEntity 
 	entities := make([]d2mapentity.MapEntity, 0)
 
 	for _, object := range mr.ds1.Objects {
-
+		if object.Lookup == nil {
+			log.Printf("Could not place object %d due to unknown lookup info", object.Id)
+			continue
+		}
 		switch object.Lookup.Type {
 		case d2datadict.ObjectTypeCharacter:
 			if object.Lookup.Base != "" && object.Lookup.Token != "" && object.Lookup.TR != "" {

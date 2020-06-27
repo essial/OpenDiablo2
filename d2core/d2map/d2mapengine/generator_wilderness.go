@@ -12,4 +12,18 @@ func (m *MapGeneratorWilderness) init(s int64, l *MapLevel, e *MapEngine) {
 	m.engine = e
 }
 
-func (m *MapGeneratorWilderness) generate() {}
+func (m *MapGeneratorWilderness) generate() {
+	if m.level.details.WorldOffsetX <0 {
+		return
+	}
+
+	// TODO: This is temporary code that doesn't really do anything...
+	//record := d2ds1.FloorShadowRecord{Prop1: 0, Style: 0, Sequence: 0}
+	//
+	//for y :=0; y < m.level.details.SizeYNormal; y++ {
+	//	for x :=0; x < m.level.details.SizeXNormal; x++ {
+	//		tile := m.engine.Tile(x + m.level.details.WorldOffsetX, y + m.level.details.WorldOffsetY)
+	//		tile.Floors = []d2ds1.FloorShadowRecord{record}
+	//	}
+	//}
+}
