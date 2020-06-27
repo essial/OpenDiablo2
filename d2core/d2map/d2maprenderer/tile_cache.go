@@ -13,7 +13,8 @@ func (mr *MapRenderer) generateTileCache() {
 	mr.palette, _ = loadPaletteForAct(mr.mapEngine.Act())
 	mapEngineSize := mr.mapEngine.Size()
 
-	for idx, tile := range *mr.mapEngine.Tiles() {
+	for idx := range mr.mapEngine.Tiles() {
+		tile := mr.mapEngine.Tiles()[idx]
 		tileX := idx % mapEngineSize.Width
 		tileY := (idx - tileX) / mapEngineSize.Width
 		for i := range tile.Floors {

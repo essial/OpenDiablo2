@@ -97,6 +97,9 @@ func (mr *MapRenderer) renderPass1(target d2render.Surface, startX, startY, endX
 	for tileY := startY; tileY < endY; tileY++ {
 		for tileX := startX; tileX < endX; tileX++ {
 			tile := mr.mapEngine.TileAt(tileX, tileY)
+			if tile == nil {
+				continue
+			}
 			mr.viewport.PushTranslationWorld(float64(tileX), float64(tileY))
 			mr.renderTilePass1(tile, target)
 			mr.viewport.PopTranslation()
@@ -108,6 +111,9 @@ func (mr *MapRenderer) renderPass2(target d2render.Surface, startX, startY, endX
 	for tileY := startY; tileY < endY; tileY++ {
 		for tileX := startX; tileX < endX; tileX++ {
 			tile := mr.mapEngine.TileAt(tileX, tileY)
+			if tile == nil {
+				continue
+			}
 			mr.viewport.PushTranslationWorld(float64(tileX), float64(tileY))
 			mr.renderTilePass2(tile, target)
 
@@ -130,6 +136,9 @@ func (mr *MapRenderer) renderPass3(target d2render.Surface, startX, startY, endX
 	for tileY := startY; tileY < endY; tileY++ {
 		for tileX := startX; tileX < endX; tileX++ {
 			tile := mr.mapEngine.TileAt(tileX, tileY)
+			if tile == nil {
+				continue
+			}
 			mr.viewport.PushTranslationWorld(float64(tileX), float64(tileY))
 			mr.renderTilePass3(tile, target)
 			mr.viewport.PopTranslation()

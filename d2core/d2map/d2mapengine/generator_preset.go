@@ -26,5 +26,13 @@ func (m *MapGeneratorPreset) generate() {
 	levelPresetId := m.level.preset.DefinitionId
 
 	stamp := d2mapstamp.LoadStamp(levelTypeId, levelPresetId, -1)
-	m.engine.PlaceStamp(stamp, 0, 0)
+	x := m.level.details.WorldOffsetX
+	y := m.level.details.WorldOffsetY
+	if x < 0 {
+		return
+	}
+	if y < 0 {
+		return
+	}
+	m.engine.PlaceStamp(stamp, x, y)
 }

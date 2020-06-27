@@ -23,7 +23,7 @@ type MapEngine struct {
 	act           int                        // The map's act
 	seed          int64                      // The map seed
 	entities      []d2mapentity.MapEntity    // Entities on the map
-	tiles         []d2ds1.TileRecord         // The map tiles
+	tiles         map[int]*d2ds1.TileRecord   // The map tiles
 	size          d2common.Size              // The size of the map, in tiles
 	levelType     d2datadict.LevelTypeRecord // The level type of this map
 	dt1TileData   []d2dt1.Tile               // The DT1 tile data
@@ -42,8 +42,8 @@ func InitializeMapEngineForAct(act *MapAct) {
 
 	for levelIdx := range act.levels {
 		details := &act.levels[levelIdx].details
-		right := details.WorldOffsetX + details.SizeXNormal
-		top := details.WorldOffsetY + details.SizeYNormal
+		right := details.WorldOffsetX + details.SizeXNormal + 1
+		top := details.WorldOffsetY + details.SizeYNormal + 1
 
 		if mapWidth < right {
 			mapWidth = right
@@ -77,7 +77,7 @@ func InitializeMapEngineForAct(act *MapAct) {
 		generator.init(act.seed, level, &act.mapEngine)
 		generator.generate()
 
-		levelType := d2datadict.LevelTypes[d2enum.RegionIdType(levelIdx)]
+		levelType := d2datadict.LevelTypes[d2enum.RegionIdType(level.types.Id)]
 		for idx := range levelType.Files {
 			act.mapEngine.addDT1(levelType.Files[idx])
 		}
@@ -101,7 +101,7 @@ func (m *MapEngine) ResetMap(levelType d2enum.RegionIdType, width, height int) {
 	m.entities = make([]d2mapentity.MapEntity, 0)
 	m.levelType = d2datadict.LevelTypes[levelType]
 	m.size = d2common.Size{Width: width, Height: height}
-	m.tiles = make([]d2ds1.TileRecord, width*height)
+	m.tiles = make(map[int]*d2ds1.TileRecord)
 	m.dt1TileData = make([]d2dt1.Tile, 0)
 	//m.walkMesh = make([]d2common.PathTile, width*height*25)
 	m.dt1Files = make([]string, 0)
@@ -174,12 +174,15 @@ func (m *MapEngine) Size() d2common.Size {
 }
 
 func (m *MapEngine) Tile(x, y int) *d2ds1.TileRecord {
-	return &m.tiles[x+(y*m.size.Width)]
+	result, ok := m.tiles[x+(y*m.size.Width)]
+	if !ok {
+		return nil
+	}
+	return result
 }
 
-// Returns the map's tiles
-func (m *MapEngine) Tiles() *[]d2ds1.TileRecord {
-	return &m.tiles
+func (m *MapEngine) SetTile(x, y int, tile *d2ds1.TileRecord)  {
+	m.tiles[x+(y*m.size.Width)] = tile
 }
 
 // Places a stamp at the specified location.
@@ -204,10 +207,11 @@ func (m *MapEngine) PlaceStamp(stamp *d2mapstamp.Stamp, tileOffsetX, tileOffsetY
 	// Copy over the map tile data
 	for y := 0; y < stampH; y++ {
 		for x := 0; x < stampW; x++ {
-			targetTileIndex := m.tileCoordinateToIndex((x + xMin), (y + yMin))
-			stampTile := *stamp.Tile(x, y)
-			m.tiles[targetTileIndex] = stampTile
-			m.tiles[targetTileIndex].RegionType = stamp.RegionType()
+			tile := stamp.Tile(x, y)
+			tile.RegionType = stamp.RegionType()
+
+			m.SetTile(x+xMin, y+yMin, tile)
+
 
 		}
 	}
@@ -228,11 +232,11 @@ func (m *MapEngine) tileIndexToCoordinate(index int) (int, int) {
 
 // Returns a reference to a map tile based on the tile X,Y coordinate
 func (m *MapEngine) TileAt(tileX, tileY int) *d2ds1.TileRecord {
-	idx := m.tileCoordinateToIndex(tileX, tileY)
-	if idx < 0 || idx >= len(m.tiles) {
-		return nil
-	}
-	return &m.tiles[idx]
+	return m.Tile(tileX, tileY)
+}
+
+func (m *MapEngine) Tiles() map[int]*d2ds1.TileRecord {
+	return m.tiles
 }
 
 // Returns a reference to the map entities
@@ -273,6 +277,9 @@ func (m *MapEngine) GetStartPosition() (float64, float64) {
 	for tileY := 0; tileY < m.size.Height; tileY++ {
 		for tileX := 0; tileX < m.size.Width; tileX++ {
 			tile := m.tiles[tileX+(tileY*m.size.Width)]
+			if tile == nil {
+				continue
+			}
 			for idx := range tile.Walls {
 				if tile.Walls[idx].Type.Special() && tile.Walls[idx].Style == 30 {
 					return float64(tileX) + 0.5, float64(tileY) + 0.5
