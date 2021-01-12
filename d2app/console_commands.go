@@ -1,6 +1,7 @@
 package d2app
 
 import (
+	"errors"
 	"os"
 	"runtime/pprof"
 	"strconv"
@@ -45,6 +46,10 @@ func (a *App) dumpHeap([]string) error {
 	fileOut, err := os.Create("./pprof/heap.pprof")
 	if err != nil {
 		a.Error(err.Error())
+	}
+
+	if fileOut == nil {
+		return errors.New("could not create heap output")
 	}
 
 	if err := pprof.WriteHeapProfile(fileOut); err != nil {

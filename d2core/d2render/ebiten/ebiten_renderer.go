@@ -70,9 +70,8 @@ func (r *Renderer) Layout(_, _ int) (width, height int) {
 
 // CreateRenderer creates an ebiten renderer instance
 func CreateRenderer(cfg *d2config.Configuration) (*Renderer, error) {
-	result := &Renderer{
-		GlyphPrinter: d2util.NewDebugPrinter(),
-	}
+	result := &Renderer{}
+	result.GlyphPrinter = d2util.NewDebugPrinter(result)
 
 	if cfg != nil {
 		config := cfg

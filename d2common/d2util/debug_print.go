@@ -1,11 +1,13 @@
 package d2util
 
 import (
+	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
 	"image"
+	"image/color"
+	"image/draw"
 
+	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2interface"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2util/assets"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
@@ -13,22 +15,39 @@ const (
 	ch = assets.CharHeight
 )
 
+// GlyphPrinter uses an image containing glyphs to draw text onto ebiten images
+type GlyphPrinter struct {
+	renderer        d2interface.Renderer
+	glyphImageTable d2interface.Surface
+	glyphsBounds    []image.Rectangle
+}
+
 // NewDebugPrinter creates a new debug printer
-func NewDebugPrinter() *GlyphPrinter {
-	img := ebiten.NewImageFromImage(assets.CreateTextImage())
+func NewDebugPrinter(renderer d2interface.Renderer) *GlyphPrinter {
+	texImage := assets.CreateTextImage()
+	rgba := image.NewRGBA(texImage.Bounds())
+
+	draw.Draw(rgba, texImage.Bounds(), texImage, texImage.Bounds().Min, draw.Over)
+
+	img := renderer.NewSurface(texImage.Bounds().Size().X, texImage.Bounds().Size().Y)
+	img.ReplacePixels(rgba.Pix)
+
+	charsPerRow := texImage.Bounds().Size().X / cw
+	totalChars := charsPerRow * (texImage.Bounds().Size().Y / ch)
 
 	printer := &GlyphPrinter{
+		renderer:        renderer,
 		glyphImageTable: img,
-		glyphs:          make(map[rune]*ebiten.Image),
+		glyphsBounds:    make([]image.Rectangle, totalChars),
+	}
+
+	for idx := 0; idx < totalChars; idx++ {
+		sx := (idx % charsPerRow) * cw
+		sy := (idx / charsPerRow) * ch
+		printer.glyphsBounds[idx] = image.Rect(sx, sy, sx+cw, sy+ch)
 	}
 
 	return printer
-}
-
-// GlyphPrinter uses an image containing glyphs to draw text onto ebiten images
-type GlyphPrinter struct {
-	glyphImageTable *ebiten.Image
-	glyphs          map[rune]*ebiten.Image
 }
 
 // Print draws the string str on the image on left top corner.
@@ -38,54 +57,46 @@ type GlyphPrinter struct {
 //
 // DebugPrint always returns nil as of 1.5.0-alpha.
 func (p *GlyphPrinter) Print(target interface{}, str string) error {
-	p.PrintAt(target.(*ebiten.Image), str, 0, 0)
+	p.PrintAt(target.(d2interface.Surface), str)
 	return nil
 }
 
 // PrintAt draws the string str on the image at (x, y) position.
 // The available runes are in U+0000 to U+00FF, which is C0 Controls and
 // Basic Latin and C1 Controls and Latin-1 Supplement.
-func (p *GlyphPrinter) PrintAt(target interface{}, str string, x, y int) {
-	p.drawDebugText(target.(*ebiten.Image), str, x, y, false)
+func (p *GlyphPrinter) PrintAt(target interface{}, str string) {
+	p.drawDebugText(target.(d2interface.Surface), str, 1, 1, true)
+	p.drawDebugText(target.(d2interface.Surface), str, 0, 0, false)
 }
 
-func (p *GlyphPrinter) drawDebugText(target *ebiten.Image, str string, ox, oy int, shadow bool) {
-	op := &ebiten.DrawImageOptions{}
+func (p *GlyphPrinter) drawDebugText(target d2interface.Surface, str string, ox, oy int, shadow bool) {
+	px := 0
+	py := 0
+
+	target.PushEffect(d2enum.DrawEffectNormal)
 
 	if shadow {
-		op.ColorM.Scale(0, 0, 0, 0.5)
+		target.PushColor(color.RGBA{10, 10, 10, 255})
 	}
 
-	x := 0
-	y := 0
-
-	w, _ := p.glyphImageTable.Size()
-
-	for _, c := range str {
-		if c == '\n' {
-			x = 0
-			y += ch
+	for idx := range str {
+		if str[idx] == '\n' {
+			px = 0
+			py += ch
 
 			continue
 		}
 
-		s, ok := p.glyphs[c]
-		if !ok {
-			n := w / cw
-			sx := (int(c) % n) * cw
-			sy := (int(c) / n) * ch
-			rect := image.Rect(sx, sy, sx+cw, sy+ch)
-			s = p.glyphImageTable.SubImage(rect).(*ebiten.Image)
-			p.glyphs[c] = s
-		}
+		target.PushTranslation(px+ox, py+oy)
+		target.RenderSection(p.glyphImageTable, p.glyphsBounds[int(str[idx])])
+		target.Pop()
 
-		op.GeoM.Reset()
-		op.GeoM.Translate(float64(x), float64(y))
-		op.GeoM.Translate(float64(ox+1), float64(oy))
-
-		op.CompositeMode = ebiten.CompositeModeLighter
-		target.DrawImage(s, op)
-
-		x += cw
+		px += cw
 	}
+
+	if shadow {
+		target.Pop()
+	}
+
+	target.Pop()
 }

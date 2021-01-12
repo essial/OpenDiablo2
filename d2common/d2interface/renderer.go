@@ -20,5 +20,4 @@ type Renderer interface {
 	CurrentFPS() float64
 	ShowPanicScreen(message string)
 	Print(target interface{}, str string) error
-	PrintAt(target interface{}, str string, x, y int)
 }

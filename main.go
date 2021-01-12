@@ -19,6 +19,10 @@ func main() {
 
 	instance := d2app.Create(GitBranch, GitCommit)
 
+	if instance.ShouldTerminateImmediately() {
+		return
+	}
+
 	if err := instance.Run(); err != nil {
 		return
 	}

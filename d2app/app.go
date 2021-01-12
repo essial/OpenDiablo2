@@ -20,12 +20,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2loader/asset/types"
-
-	"github.com/pkg/profile"
-	"golang.org/x/image/colornames"
-
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2interface"
+	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2loader/asset/types"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2math"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2util"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2asset"
@@ -42,6 +38,8 @@ import (
 	"github.com/OpenDiablo2/OpenDiablo2/d2networking/d2client"
 	"github.com/OpenDiablo2/OpenDiablo2/d2networking/d2client/d2clientconnectiontype"
 	"github.com/OpenDiablo2/OpenDiablo2/d2script"
+	"github.com/pkg/profile"
+	"golang.org/x/image/colornames"
 )
 
 // these are used for debug print info
@@ -56,6 +54,7 @@ const (
 type App struct {
 	lastTime          float64
 	lastScreenAdvance float64
+	termImmediately   bool
 	showFPS           bool
 	timeScale         float64
 	captureState      captureState
@@ -118,6 +117,10 @@ func Create(gitBranch, gitCommit string) *App {
 
 	app.parseArguments()
 
+	if app.ShouldTerminateImmediately() {
+		return app
+	}
+
 	app.SetLevel(*app.Options.LogLevel)
 
 	app.asset, app.errorMessage = d2asset.NewAssetManager(*app.Options.LogLevel)
@@ -127,6 +130,12 @@ func Create(gitBranch, gitCommit string) *App {
 
 func updateNOOP() error {
 	return nil
+}
+
+// ShouldTerminateImmediately indicates that the program should terminate and not continue to run.
+// This is mainly used to exit after showing command line options
+func (a *App) ShouldTerminateImmediately() bool {
+	return a.termImmediately
 }
 
 func (a *App) startDedicatedServer() error {
@@ -224,12 +233,17 @@ func (a *App) parseArguments() {
 
 	if *showVersion {
 		a.Infof("version: OpenDiablo2 (%s %s)", a.gitBranch, a.gitCommit)
-		os.Exit(0)
+		a.termImmediately = true
+
+		return
 	}
 
 	if *showHelp {
 		flag.Usage()
-		os.Exit(0)
+
+		a.termImmediately = true
+
+		return
 	}
 }
 

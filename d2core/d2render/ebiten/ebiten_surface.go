@@ -220,7 +220,7 @@ func (s *ebitenSurface) handleStateEffect(opts *ebiten.DrawImageOptions) {
 // DrawTextf renders the string to the surface with the given format string and a set of parameters
 func (s *ebitenSurface) DrawTextf(format string, params ...interface{}) {
 	str := fmt.Sprintf(format, params...)
-	s.Renderer().PrintAt(s.image, str, s.stateCurrent.x, s.stateCurrent.y)
+	_ = s.Renderer().Print(s, str)
 }
 
 // DrawLine draws a line
@@ -303,7 +303,7 @@ func (s *ebitenSurface) colorToColorM(clr color.Color) ebiten.ColorM {
 		return emptyColorM
 	}
 
-	key := colorMCacheKey(cr | (cg << 8) | (cb << 16) | (ca << 24))
+	key := colorMCacheKey(cr | (cg << 8) | (cb << 16) | (ca << 24)) //nolint:gomnd
 	e, ok := s.colorMCache[key]
 
 	if ok {
