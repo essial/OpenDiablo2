@@ -1,10 +1,10 @@
 package d2util
 
 import (
-	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
 	"image"
-	"image/color"
 	"image/draw"
+
+	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
 
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2interface"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2util/assets"
@@ -15,7 +15,7 @@ const (
 	ch = assets.CharHeight
 )
 
-// GlyphPrinter uses an image containing glyphs to draw text onto ebiten images
+// GlyphPrinter uses an image containing glyphs to draw text onto surfaces
 type GlyphPrinter struct {
 	renderer        d2interface.Renderer
 	glyphImageTable d2interface.Surface
@@ -65,7 +65,6 @@ func (p *GlyphPrinter) Print(target interface{}, str string) error {
 // The available runes are in U+0000 to U+00FF, which is C0 Controls and
 // Basic Latin and C1 Controls and Latin-1 Supplement.
 func (p *GlyphPrinter) PrintAt(target interface{}, str string) {
-	p.drawDebugText(target.(d2interface.Surface), str, 1, 1, true)
 	p.drawDebugText(target.(d2interface.Surface), str, 0, 0, false)
 }
 
@@ -74,10 +73,6 @@ func (p *GlyphPrinter) drawDebugText(target d2interface.Surface, str string, ox,
 	py := 0
 
 	target.PushEffect(d2enum.DrawEffectNormal)
-
-	if shadow {
-		target.PushColor(color.RGBA{10, 10, 10, 255})
-	}
 
 	for idx := range str {
 		if str[idx] == '\n' {
@@ -92,10 +87,6 @@ func (p *GlyphPrinter) drawDebugText(target d2interface.Surface, str string, ox,
 		target.Pop()
 
 		px += cw
-	}
-
-	if shadow {
-		target.Pop()
 	}
 
 	target.Pop()

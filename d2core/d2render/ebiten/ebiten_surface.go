@@ -23,6 +23,7 @@ const (
 	transparency25 = 0.25
 	transparency50 = 0.50
 	transparency75 = 0.75
+	maxStack       = 1024
 )
 
 type colorMCacheKey uint32
@@ -34,7 +35,8 @@ type colorMCacheEntry struct {
 
 type ebitenSurface struct {
 	renderer       *Renderer
-	stateStack     []surfaceState
+	stateStackIdx  int
+	stateStack     [maxStack]surfaceState
 	stateCurrent   surfaceState
 	image          *ebiten.Image
 	colorMCache    map[colorMCacheKey]*colorMCacheEntry
@@ -68,66 +70,71 @@ func (s *ebitenSurface) Renderer() d2interface.Renderer {
 	return s.renderer
 }
 
+func (s *ebitenSurface) pushCurrentState() {
+	s.stateStack[s.stateStackIdx] = s.stateCurrent
+	s.stateStackIdx++
+	s.stateStack[s.stateStackIdx].Clear()
+}
+
 // PushTranslation pushes an x,y translation to the state stack
 func (s *ebitenSurface) PushTranslation(x, y int) {
-	s.stateStack = append(s.stateStack, s.stateCurrent)
+	s.pushCurrentState()
 	s.stateCurrent.x += x
 	s.stateCurrent.y += y
 }
 
 // PushSkew pushes a skew to the state stack
 func (s *ebitenSurface) PushSkew(skewX, skewY float64) {
-	s.stateStack = append(s.stateStack, s.stateCurrent)
+	s.pushCurrentState()
 	s.stateCurrent.skewX = skewX
 	s.stateCurrent.skewY = skewY
 }
 
 // PushScale pushes a scale to the state stack
 func (s *ebitenSurface) PushScale(scaleX, scaleY float64) {
-	s.stateStack = append(s.stateStack, s.stateCurrent)
+	s.pushCurrentState()
 	s.stateCurrent.scaleX = scaleX
 	s.stateCurrent.scaleY = scaleY
 }
 
 // PushEffect pushes an effect to the state stack
 func (s *ebitenSurface) PushEffect(effect d2enum.DrawEffect) {
-	s.stateStack = append(s.stateStack, s.stateCurrent)
+	s.pushCurrentState()
 	s.stateCurrent.effect = effect
 }
 
 // PushFilter pushes a filter to the state stack
 func (s *ebitenSurface) PushFilter(filter d2enum.Filter) {
-	s.stateStack = append(s.stateStack, s.stateCurrent)
+	s.pushCurrentState()
 	s.stateCurrent.filter = d2ToEbitenFilter(filter)
 }
 
 // PushColor pushes a color to the stat stack
 func (s *ebitenSurface) PushColor(c color.Color) {
-	s.stateStack = append(s.stateStack, s.stateCurrent)
+	s.pushCurrentState()
 	s.stateCurrent.color = c
 }
 
 // PushBrightness pushes a brightness value to the state stack
 func (s *ebitenSurface) PushBrightness(brightness float64) {
-	s.stateStack = append(s.stateStack, s.stateCurrent)
+	s.pushCurrentState()
 	s.stateCurrent.brightness = brightness
 }
 
 // PushSaturation pushes a saturation value to the state stack
 func (s *ebitenSurface) PushSaturation(saturation float64) {
-	s.stateStack = append(s.stateStack, s.stateCurrent)
+	s.pushCurrentState()
 	s.stateCurrent.saturation = saturation
 }
 
 // Pop pops a state off of the state stack
 func (s *ebitenSurface) Pop() {
-	count := len(s.stateStack)
-	if count == 0 {
+	if s.stateStackIdx == 0 {
 		panic("empty stack")
 	}
 
-	s.stateCurrent = s.stateStack[count-1]
-	s.stateStack = s.stateStack[:count-1]
+	s.stateStackIdx--
+	s.stateCurrent = s.stateStack[s.stateStackIdx]
 }
 
 // PopN pops n states off the the state stack

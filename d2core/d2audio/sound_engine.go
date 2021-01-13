@@ -5,12 +5,10 @@ import (
 	"math/rand"
 	"strconv"
 
-	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2asset"
-
-	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2records"
-
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2interface"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2util"
+	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2asset"
+	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2records"
 )
 
 type envState int

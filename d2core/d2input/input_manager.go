@@ -1,7 +1,11 @@
 package d2input
 
 import (
+	"fmt"
 	"sort"
+	"strings"
+
+	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2config"
 
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2interface"
@@ -20,9 +24,14 @@ type inputManager struct {
 }
 
 // NewInputManager returns a new input manager instance
-func NewInputManager() d2interface.InputManager {
-	return &inputManager{
-		inputService: ebiten_input.InputService{},
+func NewInputManager(config *d2config.Configuration) d2interface.InputManager {
+	switch strings.ToUpper(config.Backend) {
+	case "EBITEN":
+		return &inputManager{
+			inputService: ebiten_input.InputService{},
+		}
+	default:
+		panic(fmt.Errorf("no input manager available for provider %q", config.Backend))
 	}
 }
 

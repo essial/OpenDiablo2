@@ -166,36 +166,35 @@ func (a *App) startDedicatedServer() error {
 }
 
 func (a *App) loadEngine() error {
+	var err error
+
 	// Create our renderer
-	renderer, err := ebiten.CreateRenderer(a.config)
-	if err != nil {
+	if a.renderer, err = ebiten.CreateRenderer(a.config); err != nil {
 		return err
 	}
 
-	a.renderer = renderer
-
+	// Parachute for initialization errors
 	if a.errorMessage != nil {
 		return a.renderer.Run(a.updateInitError, updateNOOP, 800, 600, "OpenDiablo2")
 	}
 
-	audio := ebiten2.CreateAudio(*a.Options.LogLevel, a.asset)
+	// Initialize the audio engine
+	a.audio = ebiten2.CreateAudio(*a.Options.LogLevel, a.asset)
 
-	inputManager := d2input.NewInputManager()
+	// Initialize the input manager
+	a.inputManager = d2input.NewInputManager(a.config)
 
-	term, err := d2term.New(inputManager)
-	if err != nil {
+	// Initialize the terminal
+	if a.terminal, err = d2term.New(a.inputManager); err != nil {
 		return err
 	}
 
-	scriptEngine := d2script.CreateScriptEngine()
+	// Initialize the scripting engine
+	a.scriptEngine = d2script.CreateScriptEngine()
 
-	uiManager := d2ui.NewUIManager(a.asset, renderer, inputManager, *a.Options.LogLevel, audio)
+	// Initialize the UI manager
+	a.ui = d2ui.NewUIManager(a.asset, a.renderer, a.inputManager, *a.Options.LogLevel, a.audio)
 
-	a.inputManager = inputManager
-	a.terminal = term
-	a.scriptEngine = scriptEngine
-	a.audio = audio
-	a.ui = uiManager
 	a.tAllocSamples = createZeroedRing(nSamplesTAlloc)
 
 	return nil

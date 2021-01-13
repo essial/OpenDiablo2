@@ -46,6 +46,7 @@ func getKeyStringMapping(assetManager *d2asset.AssetManager) map[d2enum.Key]stri
 		d2enum.KeySpace:          assetManager.TranslateString("KeySpace"),
 		d2enum.KeyAlt:            assetManager.TranslateString("KeyMenu"),
 		d2enum.KeyTab:            assetManager.TranslateString("KeyTab"),
+		d2enum.KeyEnter:          assetManager.TranslateString("KeyEnter"),
 		d2enum.Key0:              "0",
 		d2enum.Key1:              "1",
 		d2enum.Key2:              "2",

@@ -16,11 +16,11 @@ const sampleRate = 44100
 
 const logPrefix = "Ebiten Audio Provider"
 
-var _ d2interface.AudioProvider = &AudioProvider{} // Static check to confirm struct conforms to interface
+var _ d2interface.AudioProvider = &EbitenAudioProvider{} // Static check to confirm struct conforms to interface
 
 // CreateAudio creates an instance of ebiten's audio provider
-func CreateAudio(l d2util.LogLevel, am *d2asset.AssetManager) *AudioProvider {
-	result := &AudioProvider{
+func CreateAudio(l d2util.LogLevel, am *d2asset.AssetManager) *EbitenAudioProvider {
+	result := &EbitenAudioProvider{
 		asset: am,
 	}
 
@@ -33,8 +33,8 @@ func CreateAudio(l d2util.LogLevel, am *d2asset.AssetManager) *AudioProvider {
 	return result
 }
 
-// AudioProvider represents a provider capable of playing audio
-type AudioProvider struct {
+// EbitenAudioProvider represents a provider capable of playing audio
+type EbitenAudioProvider struct {
 	asset        *d2asset.AssetManager
 	audioContext *audio.Context // The Audio context
 	bgmAudio     *audio.Player  // The audio player
@@ -47,7 +47,7 @@ type AudioProvider struct {
 }
 
 // PlayBGM loads an audio stream and plays it in the background
-func (eap *AudioProvider) PlayBGM(song string) {
+func (eap *EbitenAudioProvider) PlayBGM(song string) {
 	if eap.lastBgm == song {
 		return
 	}
@@ -103,7 +103,7 @@ func (eap *AudioProvider) PlayBGM(song string) {
 }
 
 // LoadSound loads a sound affect so that it canb e played
-func (eap *AudioProvider) LoadSound(sfx string, loop, bgm bool) (d2interface.SoundEffect, error) {
+func (eap *EbitenAudioProvider) LoadSound(sfx string, loop, bgm bool) (d2interface.SoundEffect, error) {
 	volume := eap.sfxVolume
 	if bgm {
 		volume = eap.bgmVolume
@@ -118,13 +118,13 @@ func (eap *AudioProvider) LoadSound(sfx string, loop, bgm bool) (d2interface.Sou
 }
 
 // SetVolumes sets the volumes of the audio provider
-func (eap *AudioProvider) SetVolumes(bgmVolume, sfxVolume float64) {
+func (eap *EbitenAudioProvider) SetVolumes(bgmVolume, sfxVolume float64) {
 	eap.sfxVolume = sfxVolume
 	eap.bgmVolume = bgmVolume
 }
 
 // createSoundEffect creates a new instance of ebiten's sound effect implementation.
-func (eap *AudioProvider) createSoundEffect(sfx string, context *audio.Context,
+func (eap *EbitenAudioProvider) createSoundEffect(sfx string, context *audio.Context,
 	loop bool) *SoundEffect {
 	result := &SoundEffect{}
 

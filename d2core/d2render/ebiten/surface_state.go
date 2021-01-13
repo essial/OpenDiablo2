@@ -19,3 +19,7 @@ type surfaceState struct {
 	skewX, skewY   float64
 	scaleX, scaleY float64
 }
+
+func (s *surfaceState) Clear() {
+	*s = surfaceState{}
+}

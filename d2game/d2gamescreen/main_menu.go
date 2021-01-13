@@ -458,7 +458,9 @@ func (v *MainMenu) onGithubButtonClicked() {
 }
 
 func (v *MainMenu) onExitButtonClicked() {
-	os.Exit(0)
+	pid := os.Getpid()
+	p, _ := os.FindProcess(pid)
+	_ = p.Signal(os.Kill)
 }
 
 func (v *MainMenu) onCreditsButtonClicked() {

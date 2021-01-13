@@ -71,6 +71,10 @@ func (l *Label) SetIsHovered(isHovered bool) error {
 }
 
 func (l *Label) render(target d2interface.Surface) {
+	if 0 == len(l.text) {
+		return
+	}
+
 	if l.isBlinking && time.Since(l.blinkTimer) >= 200*time.Millisecond {
 		l.isDisplayed = !l.isDisplayed
 		l.blinkTimer = time.Now()
@@ -108,6 +112,16 @@ func (l *Label) SetText(text string) error {
 }
 
 func (l *Label) setText(text string) error {
+	if text == l.text {
+		return nil
+	}
+
+	l.text = text
+
+	if len(text) == 0 {
+		return nil
+	}
+
 	width, height := l.font.GetTextMetrics(text)
 
 	surface := l.renderer.NewSurface(width, height)
@@ -124,7 +138,6 @@ func (l *Label) setText(text string) error {
 	}
 
 	l.surface = surface
-	l.text = text
 
 	return nil
 }
