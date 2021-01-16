@@ -26,7 +26,7 @@ func NewDebugPrinter(renderer d2interface.Renderer) *GlyphPrinter {
 	texImage := assets.CreateTextImage()
 	pixels := make([]byte, texImage.Bounds().Dx()*texImage.Bounds().Dy()*4)
 
-	stride := texImage.Bounds().Dy() * 4
+	stride := texImage.Bounds().Dx() * 4
 	for y := 0; y < texImage.Bounds().Dy(); y++ {
 		for x := 0; x < texImage.Bounds().Dx(); x++ {
 			r, g, b, _ := texImage.At(x, y).RGBA()
