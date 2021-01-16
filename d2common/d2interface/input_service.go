@@ -4,6 +4,8 @@ import "github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
 
 // InputService represents an interface offering Keyboard and Mouse interactions.
 type InputService interface {
+	// Process processes any events.
+	Process()
 	// CursorPosition returns a position of a mouse cursor relative to the game screen (window).
 	CursorPosition() (x int, y int)
 	// InputChars return "printable" runes read from the keyboard at the time update is called.

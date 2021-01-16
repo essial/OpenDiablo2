@@ -25,28 +25,24 @@ const (
 	defaultScaleY     = 1.0
 )
 
-type renderCallback = func(surface d2interface.Surface) error
-
-type updateCallback = func() error
-
 // static check that we implement our renderer interface
 var _ d2interface.Renderer = &Renderer{}
 
 // Renderer is an implementation of a renderer
 type Renderer struct {
-	updateCallback
-	renderCallback
+	d2interface.UpdateCallback
+	d2interface.RenderCallback
 	*d2util.GlyphPrinter
 	lastRenderError error
 }
 
 // Update calls the game's logical update function (the `Advance` method)
 func (r *Renderer) Update() error {
-	if r.updateCallback == nil {
+	if r.UpdateCallback == nil {
 		return errors.New("no update callback defined for ebiten renderer")
 	}
 
-	return r.updateCallback()
+	return r.UpdateCallback()
 }
 
 const drawError = "no render callback defined for ebiten renderer"
@@ -55,12 +51,12 @@ const drawError = "no render callback defined for ebiten renderer"
 func (r *Renderer) Draw(screen *ebiten.Image) {
 	r.lastRenderError = nil
 
-	if r.renderCallback == nil {
+	if r.RenderCallback == nil {
 		r.lastRenderError = errors.New(drawError)
 		return
 	}
 
-	r.lastRenderError = r.renderCallback(createEbitenSurface(r, screen))
+	r.lastRenderError = r.RenderCallback(createEbitenSurface(r, screen))
 }
 
 // Layout returns the renderer screen width and height
@@ -105,9 +101,9 @@ func (r *Renderer) IsDrawingSkipped() bool {
 }
 
 // Run initializes the renderer
-func (r *Renderer) Run(f renderCallback, u updateCallback, width, height int, title string) error {
-	r.renderCallback = f
-	r.updateCallback = u
+func (r *Renderer) Run(render d2interface.RenderCallback, update d2interface.UpdateCallback, width, height int, title string) error {
+	r.RenderCallback = render
+	r.UpdateCallback = update
 
 	ebiten.SetWindowTitle(title)
 	ebiten.SetWindowResizable(true)

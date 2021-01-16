@@ -25,11 +25,11 @@ import (
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2math"
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2util"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2asset"
-	ebiten2 "github.com/OpenDiablo2/OpenDiablo2/d2core/d2audio/ebiten"
+	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2audio"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2config"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2gui"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2input"
-	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2render/ebiten"
+	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2render"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2screen"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2term"
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2ui"
@@ -107,6 +107,7 @@ func Create(gitBranch, gitCommit string) *App {
 
 	app := &App{
 		Logger:    logger,
+		showFPS:   true,
 		gitBranch: gitBranch,
 		gitCommit: gitCommit,
 		Options: &Options{
@@ -169,7 +170,7 @@ func (a *App) loadEngine() error {
 	var err error
 
 	// Create our renderer
-	if a.renderer, err = ebiten.CreateRenderer(a.config); err != nil {
+	if a.renderer, err = d2render.Create(a.config); err != nil {
 		return err
 	}
 
@@ -179,10 +180,10 @@ func (a *App) loadEngine() error {
 	}
 
 	// Initialize the audio engine
-	a.audio = ebiten2.CreateAudio(*a.Options.LogLevel, a.asset)
+	a.audio = d2audio.Create(*a.Options.LogLevel, a.asset, a.config)
 
 	// Initialize the input manager
-	a.inputManager = d2input.NewInputManager(a.config)
+	a.inputManager = d2input.Create(a.config)
 
 	// Initialize the terminal
 	if a.terminal, err = d2term.New(a.inputManager); err != nil {

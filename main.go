@@ -24,6 +24,6 @@ func main() {
 	}
 
 	if err := instance.Run(); err != nil {
-		return
+		panic(err)
 	}
 }

@@ -157,7 +157,7 @@ func (s *ebitenSurface) RenderSprite(sprite *d2ui.Sprite) {
 }
 
 // Render renders the given surface
-func (s *ebitenSurface) Render(sfc d2interface.Surface) {
+func (s *ebitenSurface) Render(sfc d2interface.Surface) error {
 	opts := s.createDrawImageOptions()
 
 	if s.stateCurrent.brightness != 1 || s.stateCurrent.saturation != 1 {
@@ -167,10 +167,12 @@ func (s *ebitenSurface) Render(sfc d2interface.Surface) {
 	s.handleStateEffect(opts)
 
 	s.image.DrawImage(sfc.(*ebitenSurface).image, opts)
+
+	return nil
 }
 
 // Renders the section of the surface, given the bounds
-func (s *ebitenSurface) RenderSection(sfc d2interface.Surface, bound image.Rectangle) {
+func (s *ebitenSurface) RenderSection(sfc d2interface.Surface, bound image.Rectangle) error {
 	opts := s.createDrawImageOptions()
 
 	if s.stateCurrent.brightness != 0 {
@@ -180,6 +182,8 @@ func (s *ebitenSurface) RenderSection(sfc d2interface.Surface, bound image.Recta
 	s.handleStateEffect(opts)
 
 	s.image.DrawImage(sfc.(*ebitenSurface).image.SubImage(bound).(*ebiten.Image), opts)
+
+	return nil
 }
 
 func (s *ebitenSurface) createDrawImageOptions() *ebiten.DrawImageOptions {
@@ -255,8 +259,10 @@ func (s *ebitenSurface) DrawRect(width, height int, fillColor color.Color) {
 }
 
 // Clear clears the entire surface, filling with the given color
-func (s *ebitenSurface) Clear(fillColor color.Color) {
+func (s *ebitenSurface) Clear(fillColor color.Color) error {
 	s.image.Fill(fillColor)
+
+	return nil
 }
 
 // GetSize gets the size of the surface
@@ -270,8 +276,10 @@ func (s *ebitenSurface) GetDepth() int {
 }
 
 // ReplacePixels replaces pixels in the surface with the given pixels
-func (s *ebitenSurface) ReplacePixels(pixels []byte) {
-	s.image.ReplacePixels(pixels)
+func (s *ebitenSurface) ReplacePixels(pixels *[]byte) error {
+	s.image.ReplacePixels(*pixels)
+
+	return nil
 }
 
 // Screenshot returns an *image.RGBA of the surface

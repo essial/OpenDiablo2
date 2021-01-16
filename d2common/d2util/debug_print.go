@@ -2,7 +2,6 @@ package d2util
 
 import (
 	"image"
-	"image/draw"
 
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
 
@@ -25,12 +24,31 @@ type GlyphPrinter struct {
 // NewDebugPrinter creates a new debug printer
 func NewDebugPrinter(renderer d2interface.Renderer) *GlyphPrinter {
 	texImage := assets.CreateTextImage()
-	rgba := image.NewRGBA(texImage.Bounds())
+	pixels := make([]byte, texImage.Bounds().Dx()*texImage.Bounds().Dy()*4)
 
-	draw.Draw(rgba, texImage.Bounds(), texImage, texImage.Bounds().Min, draw.Over)
+	stride := texImage.Bounds().Dy() * 4
+	for y := 0; y < texImage.Bounds().Dy(); y++ {
+		for x := 0; x < texImage.Bounds().Dx(); x++ {
+			r, g, b, _ := texImage.At(x, y).RGBA()
+			if r > 0 || g > 0 || b > 0 {
+				pixels[(y*stride)+(x*4)+0] = 255
+				pixels[(y*stride)+(x*4)+1] = 255
+				pixels[(y*stride)+(x*4)+2] = 255
+				pixels[(y*stride)+(x*4)+3] = 255
+				continue
+			}
+			pixels[(y*stride)+(x*4)+0] = 0
+			pixels[(y*stride)+(x*4)+1] = 0
+			pixels[(y*stride)+(x*4)+2] = 0
+			pixels[(y*stride)+(x*4)+3] = 0
+		}
+	}
 
 	img := renderer.NewSurface(texImage.Bounds().Size().X, texImage.Bounds().Size().Y)
-	img.ReplacePixels(rgba.Pix)
+
+	if err := img.ReplacePixels(&pixels); err != nil {
+		panic(err)
+	}
 
 	charsPerRow := texImage.Bounds().Size().X / cw
 	totalChars := charsPerRow * (texImage.Bounds().Size().Y / ch)
@@ -72,7 +90,7 @@ func (p *GlyphPrinter) drawDebugText(target d2interface.Surface, str string, ox,
 	px := 0
 	py := 0
 
-	target.PushEffect(d2enum.DrawEffectNormal)
+	target.PushEffect(d2enum.DrawEffectModulate)
 
 	for idx := range str {
 		if str[idx] == '\n' {
@@ -83,7 +101,9 @@ func (p *GlyphPrinter) drawDebugText(target d2interface.Surface, str string, ox,
 		}
 
 		target.PushTranslation(px+ox, py+oy)
-		target.RenderSection(p.glyphImageTable, p.glyphsBounds[int(str[idx])])
+		if err := target.RenderSection(p.glyphImageTable, p.glyphsBounds[int(str[idx])]); err != nil {
+			panic(err)
+		}
 		target.Pop()
 
 		px += cw

@@ -104,7 +104,7 @@ func (mr *MapRenderer) generateFloorCache(tile *d2ds1.FloorShadowRecord) {
 		d2dt1.DecodeTileGfxData(tileData[i].Blocks, &indexData, tileYOffset, tileData[i].Width)
 		pixels := d2util.ImgIndexToRGBA(indexData, mr.palette)
 
-		image.ReplacePixels(pixels)
+		image.ReplacePixels(&pixels)
 
 		mr.setImageCacheRecord(tile.Style, tile.Sequence, 0, tileIndex, image)
 	}
@@ -148,7 +148,7 @@ func (mr *MapRenderer) generateShadowCache(tile *d2ds1.FloorShadowRecord) {
 	d2dt1.DecodeTileGfxData(tileData.Blocks, &indexData, tileYOffset, tileData.Width)
 	pixels := d2util.ImgIndexToRGBA(indexData, mr.palette)
 
-	image.ReplacePixels(pixels)
+	image.ReplacePixels(&pixels)
 
 	mr.setImageCacheRecord(tile.Style, tile.Sequence, d2enum.TileShadow, tile.RandomIndex, image)
 }
@@ -219,7 +219,7 @@ func (mr *MapRenderer) generateWallCache(tile *d2ds1.WallRecord) {
 
 	pixels := d2util.ImgIndexToRGBA(indexData, mr.palette)
 
-	image.ReplacePixels(pixels)
+	image.ReplacePixels(&pixels)
 
 	mr.setImageCacheRecord(tile.Style, tile.Sequence, tile.Type, tile.RandomIndex, image)
 }

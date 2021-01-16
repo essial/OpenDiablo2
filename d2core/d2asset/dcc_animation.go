@@ -193,7 +193,7 @@ func (a *DCCAnimation) createFrameSurface(directionIndex, frameIndex int) (d2int
 
 	sfc := a.renderer.NewSurface(animFrame.width, animFrame.height)
 
-	sfc.ReplacePixels(colorData)
+	sfc.ReplacePixels(&colorData)
 
 	return sfc, nil
 }

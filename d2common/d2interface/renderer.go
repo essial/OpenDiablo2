@@ -1,14 +1,14 @@
 package d2interface
 
-type renderCallback = func(Surface) error
+type RenderCallback = func(Surface) error
 
-type updateCallback = func() error
+type UpdateCallback = func() error
 
 // Renderer interface defines the functionality of a renderer
 type Renderer interface {
 	GetRendererName() string
 	SetWindowIcon(fileName string)
-	Run(r renderCallback, u updateCallback, width, height int, title string) error
+	Run(render RenderCallback, update UpdateCallback, width, height int, title string) error
 	IsDrawingSkipped() bool
 	CreateSurface(surface Surface) (Surface, error)
 	NewSurface(width, height int) Surface

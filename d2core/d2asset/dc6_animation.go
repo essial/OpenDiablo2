@@ -176,7 +176,7 @@ func (a *DC6Animation) createFrameSurface(directionIndex, frameIndex int) (d2int
 
 	sfc := a.renderer.NewSurface(int(dc6Frame.Width), int(dc6Frame.Height))
 
-	sfc.ReplacePixels(colorData)
+	sfc.ReplacePixels(&colorData)
 
 	return sfc, nil
 }

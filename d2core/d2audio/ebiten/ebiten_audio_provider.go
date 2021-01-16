@@ -18,8 +18,8 @@ const logPrefix = "Ebiten Audio Provider"
 
 var _ d2interface.AudioProvider = &EbitenAudioProvider{} // Static check to confirm struct conforms to interface
 
-// CreateAudio creates an instance of ebiten's audio provider
-func CreateAudio(l d2util.LogLevel, am *d2asset.AssetManager) *EbitenAudioProvider {
+// Create creates an instance of ebiten's audio provider
+func Create(l d2util.LogLevel, am *d2asset.AssetManager) *EbitenAudioProvider {
 	result := &EbitenAudioProvider{
 		asset: am,
 	}

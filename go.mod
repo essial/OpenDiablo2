@@ -13,6 +13,7 @@ require (
 	github.com/pkg/profile v1.5.0
 	github.com/robertkrimen/otto v0.0.0-20200922221731-ef014fd054ac
 	github.com/stretchr/testify v1.4.0
+	github.com/veandco/go-sdl2 v0.4.5
 	golang.org/x/exp v0.0.0-20201008143054-e3b2a7f2fdc7 // indirect
 	golang.org/x/image v0.0.0-20200927104501-e162460cd6b5
 	golang.org/x/sys v0.0.0-20201028215240-c5abc1b1d397 // indirect

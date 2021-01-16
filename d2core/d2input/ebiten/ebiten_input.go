@@ -2,11 +2,14 @@
 package ebiten
 
 import (
+	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
+	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2interface"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-
-	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
 )
+
+// static check that we implement our input service interface
+var _ d2interface.InputService = &InputService{}
 
 var (
 	//nolint:gochecknoglobals // This is a constant in all but by name, no constant map in go
@@ -122,6 +125,10 @@ var (
 
 // InputService provides an abstraction on ebiten to support handling input events
 type InputService struct{}
+
+func (is InputService) Process() {
+
+}
 
 // CursorPosition returns a position of a mouse cursor relative to the game screen (window).
 func (is InputService) CursorPosition() (x, y int) {

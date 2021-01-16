@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2input/sdl2"
+
 	"github.com/OpenDiablo2/OpenDiablo2/d2core/d2config"
 
 	"github.com/OpenDiablo2/OpenDiablo2/d2common/d2enum"
@@ -23,12 +25,16 @@ type inputManager struct {
 	entries handlerEntryList
 }
 
-// NewInputManager returns a new input manager instance
-func NewInputManager(config *d2config.Configuration) d2interface.InputManager {
+// Create returns a new input manager instance
+func Create(config *d2config.Configuration) d2interface.InputManager {
 	switch strings.ToUpper(config.Backend) {
 	case "EBITEN":
 		return &inputManager{
 			inputService: ebiten_input.InputService{},
+		}
+	case "SDL2":
+		return &inputManager{
+			inputService: sdl2.CreateInputService(),
 		}
 	default:
 		panic(fmt.Errorf("no input manager available for provider %q", config.Backend))
@@ -37,6 +43,7 @@ func NewInputManager(config *d2config.Configuration) d2interface.InputManager {
 
 // Advance advances the inputManager
 func (im *inputManager) Advance(_, _ float64) error {
+	im.inputService.Process()
 	im.updateKeyMod()
 	im.updateButtonMod()
 
